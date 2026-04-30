@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Playwright
+.playwright/
+
+# IDE
+.idea/
+.vscode/
+
+# State (managed by GitHub Actions cache)
+state.json
