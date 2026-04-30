@@ -2,11 +2,7 @@ name: 子弹价格监控
 
 on:
   schedule:
-    # 每10分钟运行一次 (UTC时间)
-    # 注意: GitHub Actions 对公开仓库免费无限使用，私有仓库 2000分钟/月
-    # 如果使用私有仓库，建议改为: cron: "*/30 * * * *" (每30分钟)
     - cron: "*/10 * * * *"
-  # 支持手动触发测试
   workflow_dispatch:
 
 permissions:
@@ -16,7 +12,7 @@ permissions:
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
 
     steps:
       - name: 检出代码
@@ -32,29 +28,33 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: 安装 Playwright 浏览器及依赖
-        uses: microsoft/playwright-github-action@v1
+      - name: 缓存 Playwright 浏览器
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-
+
+      - name: 安装 Playwright 浏览器及系统依赖
+        run: |
+          playwright install --with-deps chromium
 
       - name: 恢复上次运行状态
         id: cache-state
         uses: actions/cache@v4
         with:
           path: state.json
-          key: bullet-monitor-state-${{ github.run_id }}
+          key: bullet-state-${{ github.run_id }}
           restore-keys: |
-            bullet-monitor-state-
+            bullet-state-
 
       - name: 执行价格监控
         env:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: python monitor.py
 
-      - name: 显示状态 (调试用)
+      - name: 显示状态
         if: always()
-        run: |
-          if [ -f state.json ]; then
-            echo "=== 状态文件内容 ==="
-            cat state.json
-          else
-            echo "无状态文件"
-          fi
+        run: cat state.json 2>/dev/null || echo "无状态文件"
