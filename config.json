@@ -1,6 +1,6 @@
 {
     "bullet_name": "12.7x55mm PD12双头弹",
-    "low_price_threshold": 2000,
+    "low_price_threshold": 2800,
     "email": {
         "smtp_host": "smtp.qq.com",
         "smtp_port": 465,
