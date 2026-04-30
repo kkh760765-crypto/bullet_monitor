@@ -278,14 +278,20 @@ def main():
         page = context.new_page()
 
         try:
-            print(f"[{datetime.now()}] 加载 ammo 页面...")
-            page.goto(
-                "https://tool.zxfps.com/sjz/v/ammo",
-                wait_until="domcontentloaded",
-                timeout=60000,
-            )
-            page.wait_for_selector("#app", timeout=30000)
-            time.sleep(3)
+            # 带重试的页面加载，处理跨境网络不稳定
+            url = "https://tool.zxfps.com/sjz/v/ammo"
+            for attempt in range(3):
+                try:
+                    print(f"[{datetime.now()}] 加载页面 (第{attempt+1}次)...")
+                    page.goto(url, wait_until="load", timeout=120000)
+                    page.wait_for_selector("#app", timeout=60000)
+                    time.sleep(3)
+                    break
+                except PlaywrightTimeout:
+                    if attempt == 2:
+                        raise
+                    print(f"[{datetime.now()}] 重试中...")
+                    time.sleep(5)
 
             print(f"[{datetime.now()}] 通过 API 查询子弹数据...")
             result = fetch_bullet_data(page, bullet_name)
